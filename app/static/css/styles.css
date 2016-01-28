@@ -1,0 +1,8 @@
+/* sekä html että body elementeille */
+html body{
+    
+    max-width: 100%;
+    width: 100%;
+    min-width: 100%;
+    background-color: beige;
+}

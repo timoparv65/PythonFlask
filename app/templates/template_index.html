@@ -1,15 +1,39 @@
-<!doctype html>
 {# In this file all variables inside {{}} will be replaced by Jinja2 template engine with actual data #}
-<html>
-    <head>
-        <meta charset="utf-8">
-        <title>{{title}}</title> {# title sidotaan routers.py:ssä #}
-    </head>
-    <body>
-        <h1>Wellcome {{name}}</h1> {# name sidotaan routers.py:ssä #}
-        <form action="/user" method="get">
-            <input type="text" name="name" id="name"/><br/>
-            <input type="submit" value="Send"/>
+
+{% extends 'base.html' %}
+{#{% block title %}Login{% endblock %}#}
+{% block title %}Login{{super()}}{% endblock %}{#ilman super():ia title ylikirjoittaa -Opiframen#}
+{% block head %}
+    {# super() = ota kaikki mukaan mitä oli headissä sisällä #}
+    {{super()}}
+    <style>{# laajennetaan tyylimääritystä base.html:än vastaavasta #}
+        .my_container{
+            
+            width: 500px;
+            margin: 30px auto; {# 30 pikseliä ylös, vasemmalta ja oikealta yhtä paljon tilaa #}
+            padding: 8px;
+            border: 2px solid gray;
+            border-radius: 5px;
+            background-color: beige;
+        }
+    </style>
+{% endblock %}
+{% block navbar %}{{super()}}{% endblock %}
+{% block body %}
+    {# call super() if you want to include code from base.html template #}
+    {{super()}}
+    <div class="my_container">
+        <form action="/login" method="POST">
+            {# 28.1.2016 Miten Form suojataan #}
+            {{ form.csrf_token }}{# pakollinen. Laitetaan token mukaan pyyntöön. Vaatii SECRET_KEY:n => config.py #}
+            
+            {{ form.email.label }}{# email-kentästä label tieto #}
+            {{ form.email(class='form-control',id='email' )}}{# kenttä johon annetaan email tieto. Voidaan määritellä sille tyylejä #}
+            
+            {{ form.passw.label }}
+            {{ form.passw(class='form-control') }}
+            
+            {{form.submit(class='btn btn-default')}}
         </form>
-    </body>
-</html>
+    </div>
+{% endblock %}

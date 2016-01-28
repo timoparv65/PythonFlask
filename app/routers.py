@@ -1,29 +1,29 @@
 """app kansiosta haetaan objektia app"""
 from app import app
+#28.1.2016
+#from app import run#tämä toimii, koska run.py:ssä oleva __name__ sisällöksi moduulin nimen missä se sijaitsee, eli se ei ole __main__
 #render_template gives you access to Jinja2 template engine
-#request objektista voidaan kaivaa kaikki mitä tulee BackEndiin
+#request objektista voidaan kaivaa kaikki mitä tulee BackEndiin (client lähettää)
 from flask import render_template,request,make_response
+from app.forms import LoginForm#28.1.2016 importtaa LoginForm luokka forms.py:stä
 
 #tämä on myös tapa kommentoida, vain yhdelle riville
 """This is comment
     you can use multiple lines"""
 
+#Routerin on aina palautettava vastaus
+
 #kun pyyntö tulee serveriltä root kontekstiin, määritellään funktio index()
-#@app => @ tarkoitta deklaraatiota, käskee frameworkkia tekemään asialle jotain
-@app.route('/')
+#@app => @ = decoration, käskee frameworkkia tekemään asialle jotain
+@app.route('/',methods=['GET','POST'])
 def index():
-    name = 'Markus'
-    address = 'Rautatienkatu'
-    response = make_response(render_template('template_index.html',title=address,name=name))
-    response.headers.add('Cache-Control','no-cache')
-    return response
-    #return render_template('template_index.html',title=address,name=name)#tokana toteutettu
-    #return 'Hello World again with changes'# vaatii neljä välilyöntiä (kts Bracketsin oikea alareuna)#ekana toteutettu
+    login = LoginForm()
+    return render_template('template_index.html',form=login)
 
 #tämä ns. clean url
-@app.route('/user/<name>')
-def user(name):
-    print(request.headers.get('User-Agent'))
+@app.route('/user/<name>')#konteksti user
+def user(name):#funktio user
+    print(request.headers.get('User-Agent'))#voidaan tutkia esim käytetäänkö aplikaatiota mobiililaitteella ja toimia sen mukaan
     print(request.headers.get('Accept-Language'))
     return render_template('template_user.html',name=name)
     #kutsu localhost:3000/user/timo
