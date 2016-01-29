@@ -1,11 +1,12 @@
 """app kansiosta haetaan objektia app"""
 from app import app
-#28.1.2016
-#from app import run#tämä toimii, koska run.py:ssä oleva __name__ sisällöksi moduulin nimen missä se sijaitsee, eli se ei ole __main__
 #render_template gives you access to Jinja2 template engine
 #request objektista voidaan kaivaa kaikki mitä tulee BackEndiin (client lähettää)
-from flask import render_template,request,make_response
-from app.forms import LoginForm#28.1.2016 importtaa LoginForm luokka forms.py:stä
+#flash = Flash viestejä varten
+from flask import render_template,request,make_response,flash,redirect
+from app.forms import LoginForm,RegisterForm#29.1.2016 tuo formit forms.py:stä
+from app.db_models import Users#29.1.2016 tuodaan Users malli
+from app import db# 29.1.2016 tuodaan tietokanta
 
 #tämä on myös tapa kommentoida, vain yhdelle riville
 """This is comment
@@ -17,8 +18,36 @@ from app.forms import LoginForm#28.1.2016 importtaa LoginForm luokka forms.py:st
 #@app => @ = decoration, käskee frameworkkia tekemään asialle jotain
 @app.route('/',methods=['GET','POST'])
 def index():
-    login = LoginForm()
-    return render_template('template_index.html',form=login)
+    login = LoginForm()#login objekti
+    if request.method == 'GET':#29.1.2016 lisätty alla oleva
+        return render_template('template_index.html',form=login)
+    else:
+        #check if form data is valid
+        if login.validate_on_submit():#tsekkaa onko formit valideja
+            print(login.email.data)
+            print(login.passw.data)
+            return render_template('template_user.html')
+        #form data was not valid
+        else:
+            flash('Give proper information to email and password fields!')#näyttö toteutettu base.html:ssä (kalvo s.56)
+            return render_template('template_index.html',form=login)
+
+#29.1.2016 harjoitustehtävä: routteri rekisteröintiin
+@app.route('/register',methods=['GET','POST'])
+def registerUser():
+    form = RegisterForm()
+    if request.method == 'GET':
+        return render_template('template_register.html',form=form)
+    else:
+        if form.validate_on_submit():
+            user = Users(form.email.data,form.passw.data)
+            db.session.add(user)
+            db.session.commit()#ei otettu kantaa jos tietokantaan tallentaminen epäonnistuu
+            flash("Name {0} registered".format(form.email.data))
+            return redirect('/')
+        else:
+            flash('Invalid email address or no password given')
+            return render_template('template_register.html',form=form)
 
 #tämä ns. clean url
 @app.route('/user/<name>')#konteksti user
@@ -35,6 +64,3 @@ def userParams():
     name = request.args.get('name')
     return render_template('template_user.html',name=name)
     #kutsutaan
-
-print('This is not any more included in index() function')
-#yllä oleva printataan komentoikkunaan
