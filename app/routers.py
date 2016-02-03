@@ -1,12 +1,15 @@
+# Tämä on serveripään tiedosto
+
 """app kansiosta haetaan objektia app"""
 from app import app
 #render_template gives you access to Jinja2 template engine
 #request objektista voidaan kaivaa kaikki mitä tulee BackEndiin (client lähettää)
 #flash = Flash viestejä varten
-from flask import render_template,request,make_response,flash,redirect
-from app.forms import LoginForm,RegisterForm#29.1.2016 tuo formit forms.py:stä
-from app.db_models import Users#29.1.2016 tuodaan Users malli
-from app import db# 29.1.2016 tuodaan tietokanta
+#session = session objekti käyttäjästä (3.2.2016)
+from flask import render_template,request,make_response,flash,redirect,session
+from app.forms import LoginForm,RegisterForm,FriendForm
+from app.db_models import Users,Friends
+from app import db
 
 #tämä on myös tapa kommentoida, vain yhdelle riville
 """This is comment
@@ -20,34 +23,85 @@ from app import db# 29.1.2016 tuodaan tietokanta
 def index():
     login = LoginForm()#login objekti
     if request.method == 'GET':#29.1.2016 lisätty alla oleva
-        return render_template('template_index.html',form=login)
+        return render_template('template_index.html',form=login,isLogged=False)
     else:
         #check if form data is valid
         if login.validate_on_submit():#tsekkaa onko formit valideja
-            print(login.email.data)
-            print(login.passw.data)
-            return render_template('template_user.html')
+            #3.2.2016 Check if correct username or password
+            user = Users.query.filter_by(email=login.email.data).filter_by(passw=login.passw.data)
+            #yllä oleva luo SQL-lauseen: Select email passw From User Where email="?" And passw="?"
+            if user.count() == 1:#jos palautetun taulukon koko on yksi
+                print(user[0])
+                session['user_id'] = user[0].id#tallennetaan käyttäjän ID
+                session['isLogged'] = True
+                print(session['user_id'])
+                #Haetaan ystävät
+                #tapa 1 listata ystävät
+                friends = Friends.query.filter_by(user_id =user[0].id)
+                print(friends)
+                return render_template('template_user.html',isLogged=True,friends=friends)
+            else:
+                flash('Wrong email or password')
+                return render_template('template_index.html',form=login,isLogged=False)
         #form data was not valid
         else:
             flash('Give proper information to email and password fields!')#näyttö toteutettu base.html:ssä (kalvo s.56)
-            return render_template('template_index.html',form=login)
+            return render_template('template_index.html',form=login,isLogged=False)
 
 #29.1.2016 harjoitustehtävä: routteri rekisteröintiin
 @app.route('/register',methods=['GET','POST'])
 def registerUser():
     form = RegisterForm()
     if request.method == 'GET':
-        return render_template('template_register.html',form=form)
+        return render_template('template_register.html',form=form,isLogged=False)
     else:
         if form.validate_on_submit():
             user = Users(form.email.data,form.passw.data)
-            db.session.add(user)
-            db.session.commit()#ei otettu kantaa jos tietokantaan tallentaminen epäonnistuu
+            try:
+                db.session.add(user)
+                db.session.commit()#ei otettu kantaa jos tietokantaan tallentaminen epäonnistuu
+            except:
+                db.session.rollback()#jos jotain tietoa meni tietokantaan, se otetaan pois
+                flash('Username allready in use')
+                return render_template('template_register.html',form=form,isLogged=False)
             flash("Name {0} registered".format(form.email.data))
             return redirect('/')
         else:
             flash('Invalid email address or no password given')
-            return render_template('template_register.html',form=form)
+            return render_template('template_register.html',form=form,isLogged=False)
+
+#Lisätty 3.2.2016
+@app.route('/friends',methods=['GET','POST'])
+def friends():
+    #routen suojaus
+    #Check that user has logged in before you let execute
+    if not('isLogged' in session) or (session['isLogged'] == False):
+        return redirect('/')#palataan login näkymään
+    #lisää ylle: suojaukseen voi käyttää myös valmiita komponentteja Flask-user
+    #(vaatii Microsoftin softaa) tai Flask-login:ia
+    form = FriendForm()
+    if request.method == 'GET':
+        return render_template('template_friends.html',form=form,isLogged=True)
+    else:
+        if form.validate_on_submit():
+            temp = Friends(form.name.data,form.address.data,form.age.data,session['user_id'])
+            db.session.add(temp)
+            db.session.commit()
+            #2. tapa listata ystävät
+            user = Users.query.get(session['user_id'])
+            print(user.friends)
+            return render_template('template_user.html',isLogged=True,friends=user.friends)
+        else:
+            flash('Give proper values to all fields')
+            return render_template('template_friends.html',form=form,isLogged=True)
+
+
+#lisätty 3.2.2016
+@app.route('/logout')
+def logout():
+    #delete user session (clear all values)
+    session.clear()
+    return redirect('/')
 
 #tämä ns. clean url
 @app.route('/user/<name>')#konteksti user

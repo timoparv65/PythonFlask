@@ -2,8 +2,8 @@
 #tänne määritellään kaikki käytetyt formit
 
 from flask.ext.wtf import Form
-from wtforms import StringField,PasswordField,SubmitField#kentät löytää kalvon sivulta 52
-from wtforms.validators import Required,Email#validaatorit kts kalvon sivu 53
+from wtforms import StringField,PasswordField,SubmitField,IntegerField#kentät löytää kalvon sivulta 52
+from wtforms.validators import Required,Email,NumberRange#validaatorit kts kalvon sivu 53
 
 #luodaan luokka joka perii Form:in
 class LoginForm(Form):
@@ -16,3 +16,10 @@ class RegisterForm(Form):
     email = StringField('Enter your valid email address',validators=[Required(),Email()])
     passw = PasswordField('Give password for this application',validators=[Required()])
     submit = SubmitField('Register')
+    
+#lisätty 3.2.2016
+class FriendForm(Form):
+    name = StringField('Enter friend name',validators=[Required()])
+    address = StringField('Enter friend address',validators=[Required()])
+    age = IntegerField('Enter friend age',validators=[Required(),NumberRange(min=0,max=115,message="Enter value between %(min)-%(max))")])
+    submit = SubmitField('Save')

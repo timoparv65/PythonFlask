@@ -18,7 +18,7 @@ app.config.from_object('config')
 #28.1.2016. Luo bootstrap objekti
 bootstrap = Bootstrap(app)
 
-#29.1.2019. SqLite tietokannan asetus, kalvo 60
+#29.1.2019. SqLite tietokannan alustus, kalvo 60
 db = SQLAlchemy(app)
 
 from app import routers
