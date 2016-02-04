@@ -11,6 +11,8 @@ from app.forms import LoginForm,RegisterForm,FriendForm
 from app.db_models import Users,Friends
 from app import db
 
+from flask.ext.bcrypt import check_password_hash#lisätty 4.2.2016
+
 #tämä on myös tapa kommentoida, vain yhdelle riville
 """This is comment
     you can use multiple lines"""
@@ -28,9 +30,16 @@ def index():
         #check if form data is valid
         if login.validate_on_submit():#tsekkaa onko formit valideja
             #3.2.2016 Check if correct username or password
-            user = Users.query.filter_by(email=login.email.data).filter_by(passw=login.passw.data)
+            #user = Users.query.filter_by(email=login.email.data).filter_by(passw=login.passw.data)
             #yllä oleva luo SQL-lauseen: Select email passw From User Where email="?" And passw="?"
-            if user.count() == 1:#jos palautetun taulukon koko on yksi
+            
+            #4.2.2016 passw on kryptattu
+            # Check if correct username
+            user = Users.query.filter_by(email=login.email.data)
+            print(user)
+            #if user.count() == 1:#3.2.2016 jos palautetun taulukon koko on yksi
+            #4.2.2016: user[0].passw = kryptattu salasana
+            if (user.count() == 1) and (check_password_hash(user[0].passw,login.passw.data)):
                 print(user[0])
                 session['user_id'] = user[0].id#tallennetaan käyttäjän ID
                 session['isLogged'] = True
@@ -87,7 +96,7 @@ def friends():
             temp = Friends(form.name.data,form.address.data,form.age.data,session['user_id'])
             db.session.add(temp)
             db.session.commit()
-            #2. tapa listata ystävät
+            #2. tapa listata ystävät. Kts db_models.py
             user = Users.query.get(session['user_id'])
             print(user.friends)
             return render_template('template_user.html',isLogged=True,friends=user.friends)
