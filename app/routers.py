@@ -7,7 +7,7 @@ from app import app
 #flash = Flash viestejä varten
 #session = session objekti käyttäjästä (3.2.2016)
 from flask import render_template,request,make_response,flash,redirect,session
-from app.forms import LoginForm,RegisterForm,FriendForm
+from app.forms import LoginForm,RegisterForm
 from app.db_models import Users,Friends
 from app import db
 
@@ -78,31 +78,6 @@ def registerUser():
         else:
             flash('Invalid email address or no password given')
             return render_template('template_register.html',form=form,isLogged=False)
-
-#Lisätty 3.2.2016
-@app.route('/friends',methods=['GET','POST'])
-def friends():
-    #routen suojaus
-    #Check that user has logged in before you let execute
-    if not('isLogged' in session) or (session['isLogged'] == False):
-        return redirect('/')#palataan login näkymään
-    #lisää ylle: suojaukseen voi käyttää myös valmiita komponentteja Flask-user
-    #(vaatii Microsoftin softaa) tai Flask-login:ia
-    form = FriendForm()
-    if request.method == 'GET':
-        return render_template('template_friends.html',form=form,isLogged=True)
-    else:
-        if form.validate_on_submit():
-            temp = Friends(form.name.data,form.address.data,form.age.data,session['user_id'])
-            db.session.add(temp)
-            db.session.commit()
-            #2. tapa listata ystävät. Kts db_models.py
-            user = Users.query.get(session['user_id'])
-            print(user.friends)
-            return render_template('template_user.html',isLogged=True,friends=user.friends)
-        else:
-            flash('Give proper values to all fields')
-            return render_template('template_friends.html',form=form,isLogged=True)
 
 
 #lisätty 3.2.2016

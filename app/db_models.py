@@ -28,6 +28,7 @@ class Friends(db.Model):
     name = db.Column(db.String)
     address = db.Column(db.String)
     age = db.Column(db.Integer)
+    filename=db.Column(db.String,default='/static/images/TimoParviainen.jpeg')
     user_id = db.Column(db.Integer,db.ForeignKey('users.id'))
     #This is Friends constructor
     def __init__(self,name,address,age,user_id):

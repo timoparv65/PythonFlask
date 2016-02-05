@@ -21,4 +21,9 @@ bootstrap = Bootstrap(app)
 #29.1.2019. SqLite tietokannan alustus, kalvo 60
 db = SQLAlchemy(app)
 
+#4.2.2016
+from blueprint.ud.ud_blueprint import ud
+#Register all needed blueprints
+app.register_blueprint(ud)
+
 from app import routers
